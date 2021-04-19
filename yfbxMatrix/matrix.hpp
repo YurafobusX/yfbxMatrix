@@ -5,13 +5,14 @@
 #include <iostream>
 #include <stdexcept>
 #include <memory>
+#include <string>
 
 /*list of exceptions (std::runtime_error):
 0. Out of range
 1. Not the same size
 2. Not the same size
 3. Matrix is not square
-differ heights in solve
+4. Heights does not match
 */
 
 namespace yfbx {
@@ -77,7 +78,7 @@ namespace yfbx {
 		data_ = std::unique_ptr <T[]>(new T[wight * height]);
 		height_ = height;
 		width_ = wight;
-		fillUniform(T);
+		fillUniform(t);
 	}
 	
 	template<typename T>
@@ -121,7 +122,7 @@ namespace yfbx {
 	template<typename T>
 	void matrix<T>::swap(matrix<T>& swapping) noexcept {
 		std::swap(data_, swapping.data_);
-		std::swap(width_, swapping.wigth_);
+		std::swap(width_, swapping.width_);
 		std::swap(height_, swapping.height_);
 		std::swap(determinant_, swapping.determinant_);
 		std::swap(isDeterminantCorrect_, swapping.isDeterminantCorrect_);
@@ -130,14 +131,14 @@ namespace yfbx {
 	template<typename T>
 	T& matrix<T>::getCell(size_t x, size_t y) const{
 		if (x >= width_ || y >= height_)
-			throw std::runtime_error("0. Out of range in " + __func__ + " " + __FILE__);
+			throw std::runtime_error(std::string("0. Out of range in ") + __func__ + " " + __FILE__);
 		return data_[x + width_ * y];
 	}
 
 	template<typename T>
 	void matrix<T>::setCell(size_t x, size_t y, const T& t) {
 		if (x >= width_ || y >= height_)
-			throw std::runtime_error("0. Out of range in " + __func__ + " " + __FILE__);
+			throw std::runtime_error(std::string("0. Out of range in ") + __func__ + " " + __FILE__);
 		data_[x + width_ * y] = t;
 		
 		isDeterminantCorrect_ = false;
@@ -146,7 +147,7 @@ namespace yfbx {
 	template<typename T>
 	std::ostream & operator<<(std::ostream& ostream, const matrix<T>& in) {
 		for (size_t i = 0; i < in.height_; i++) {
-			for (size_t j = 0; j < in.wight_; j++) {
+			for (size_t j = 0; j < in.width_; j++) {
 				ostream << in.getCell(j,i) << '\t';
 			}
 			ostream << '\n';
@@ -181,7 +182,7 @@ namespace yfbx {
 	matrix<T> matrix<T>::operator+(const matrix<T>& in) const {
 		
 		if ((height_ != in.height_) || (width_ != in.width_))
-			throw std::runtime_error("1. Not the same size " + __func__ + " " + __FILE__);
+			throw std::runtime_error(std::string("1. Not the same size ") + __func__ + " " + __FILE__);
 
 		matrix<T> res(width_, height_);
 		for (size_t i = 0; i < width_; i++) {
@@ -197,7 +198,7 @@ namespace yfbx {
 	matrix<T> matrix<T>::operator*(const matrix<T>& in) const {
 
 		if (width_ != in.height_)
-			throw std::runtime_error("2. Not the same size " + __func__ + " " + __FILE__);
+			throw std::runtime_error(std::string("2. Not the same size ") + __func__ + " " + __FILE__);
 
 		matrix<T> out((in.width_), height_);
 		for (size_t i = 0; i < in.width_; i++) {
@@ -206,7 +207,7 @@ namespace yfbx {
 				for (size_t k = 0; k < width_; k++) {
 					sum += (getCell(k, j) * in.getCell(i, k));
 				}
-				out.set(i, j, sum);
+				out.setCell(i, j, sum);
 			}
 		}
 		 
@@ -275,7 +276,7 @@ namespace yfbx {
 			}
 			norm = 1 / norm;
 			for (size_t j = i + 1; j < height_; j++) {
-				res.trans3(j, i, -(getCell(i, j) * norm));
+				res.doTranformation3(j, i, -(getCell(i, j) * norm));
 			}
 		}
 		return res;
@@ -293,14 +294,14 @@ namespace yfbx {
 					break;
 				}
 			}
-			res.trans1(i, not_null);
-			auto& norm = get(i, i);
+			res.doTranformation1(i, not_null);
+			auto& norm = getCell(i, i);
 			if (norm == 0) {
 				continue;
 			}
 			norm = 1 / norm;
 			for (size_t j = 0; j < i; j++) {
-				res.trans3(j, i, -(get(i, j) * norm));
+				res.doTranformation3(j, i, -(getCell(i, j) * norm));
 			}
 		}
 		return res;
@@ -350,7 +351,7 @@ namespace yfbx {
 	template<typename T>
 	matrix<T> matrix<T>::makeInverse() const {
 		matrix<T> one(width_, height_);
-		one.fillNS([](int x, int y) {return (x == y) ? 1 : 0; });
+		one.fillWithFunction([](int x, int y) {return (x == y) ? 1 : 0; });
 		return solve(one);
 	}
 
@@ -358,12 +359,12 @@ namespace yfbx {
 	template<typename T>
 	matrix<T> matrix<T>::solve(const matrix<T>& in) const {
 		if (height_ != in.height_)
-			throw std::runtime_error("differ heights in solve");
+			throw std::runtime_error(std::string("4. Heights does not match ") + __func__ + " " + __FILE__);
 
 		matrix<T> temp(width_ + in.width_, height_);
 		for (size_t i = 0; i < height_; i++) {
 			for (size_t j = 0; j < width_ + in.width_; j++)
-				temp.set(j, i, (j >= width_) ? (in.getCell(j - width_, i)) : (getCell(j, i)));
+				temp.setCell(j, i, (j >= width_) ? (in.getCell(j - width_, i)) : (getCell(j, i)));
 		}
 
 		temp = temp.makeLowerTriangular().makeUpperTriangular();
@@ -372,7 +373,7 @@ namespace yfbx {
 
 		for (size_t i = 0; i < in.width_; i++) {
 			for (size_t j = 0; j < in.height_; j++) {
-				res.set(i, j, temp.getCell(i + width_, j) / temp.getCell(i, i));
+				res.setCell(i, j, temp.getCell(i + width_, j) / temp.getCell(i, i));
 			}
 		}
 
