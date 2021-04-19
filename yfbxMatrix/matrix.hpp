@@ -7,13 +7,14 @@
 #include <memory>
 
 /*list of exceptions (std::runtime_error):
-non sync size in +
-non sync size in *
-rang is null in obr
+0. Out of range
+1. Not the same size
+2. Not the same size
+3. Matrix is not square
 differ heights in solve
 */
 
-namespace yfb {
+namespace yfbx {
 
 	template<typename T>
 	class matrix {
@@ -25,7 +26,7 @@ namespace yfb {
 
 	public:
 		
-		matrix(size_t in1 = 0, size_t in2 = 0, T t = 0);
+		matrix(size_t width = 0, size_t heidth = 0, T t = 0);
 		matrix(const matrix<T>&);
 		~matrix();
 
@@ -43,9 +44,9 @@ namespace yfb {
 		matrix makeLowerTriangular() const;
 
 		template<typename D>
-		friend std::ostream& operator<<(std::ostream &, const matrix<D> &);
+		friend std::ostream& operator<<(std::ostream&, const matrix<D>&);
 		template<typename D>
-		friend std::istream& operator>>(std::istream &, const matrix<D> &);
+		friend std::istream& operator>>(std::istream&, const matrix<D>&);
 
 		bool operator==(const matrix<T>&) const;
 		const matrix<T>& operator=(matrix<T>);
@@ -69,26 +70,26 @@ namespace yfb {
 	};
 }
 
-namespace YFB {
+namespace yfbx {
 
 	template<typename T>
-	matrix<T>::matrix(size_t new_x, size_t new_y, T t) {
-		data = std::unique_ptr <T[]>(new T[new_x * new_y]);
-		x = new_x;
-		y = new_y;
-		fill(T);
+	matrix<T>::matrix(size_t wight, size_t height, T t) {
+		data_ = std::unique_ptr <T[]>(new T[wight * height]);
+		height_ = height;
+		width_ = wight;
+		fillUniform(T);
 	}
-
+	
 	template<typename T>
-	matrix<T>::matrix(const matrix<T> & copping) : matrix(copping.x, copping.y) {
-		for (size_t i = 0; i < x; i++) {
-			for (size_t j = 0; j < y; j++) {
-				set(i, j, copping.get(i, j));
+	matrix<T>::matrix(const matrix<T>& copping) : matrix(copping.width_, copping.height_) {
+		for (size_t i = 0; i < width_; i++) {
+			for (size_t j = 0; j < height_; j++) {
+				setCell(i, j, copping.getCell(i, j));
 			}
 		}
 
-		determinant = copping.determinant;
-		isDeterminantCorrect = copping.isDeterminantCorrect;
+		determinant_ = copping.determinant_;
+		isDeterminantCorrect_ = copping.isDeterminantCorrect_;
 	}
 
 	template<typename T>
@@ -96,57 +97,61 @@ namespace YFB {
 	}
 
 	template<typename T>
-	void matrix<T>::fillNS(std::function<T(size_t, size_t)> func) {
-		for (size_t i = 0; i < x; i++) {
-			for (size_t j = 0; j < y; j++) {
-				set(i, j, func(i,j));
+	void matrix<T>::fillWithFunction(std::function<T(size_t, size_t)> func) {
+		for (size_t i = 0; i < width_; i++) {
+			for (size_t j = 0; j < height_; j++) {
+				setCell(i, j, func(i,j));
 			}
 		}
 
-		isDeterminantCorrect = false;
+		isDeterminantCorrect_ = false;
 	}
 
 	template<typename T>
-	void matrix<T>::fill(T element) {
-		for (size_t i = 0; i < x; i++) {
-			for (size_t j = 0; j < y; j++) {
-				set(i, j, element);
+	void matrix<T>::fillUniform(T element) {
+		for (size_t i = 0; i < width_; i++) {
+			for (size_t j = 0; j < height_; j++) {
+				setCell(i, j, element);
 			}
 		}
 
-		isDeterminantCorrect = false;
+		isDeterminantCorrect_ = false;
 	}
 
 	template<typename T>
 	void matrix<T>::swap(matrix<T>& swapping) noexcept {
-		std::swap(data, swapping.data);
-		std::swap(x, swapping.x);
-		std::swap(y, swapping.y);
-		std::swap(determinant, swapping.determinant);
-		std::swap(isDeterminantCorrect, swapping.isDeterminantCorrect);
+		std::swap(data_, swapping.data_);
+		std::swap(width_, swapping.wigth_);
+		std::swap(height_, swapping.height_);
+		std::swap(determinant_, swapping.determinant_);
+		std::swap(isDeterminantCorrect_, swapping.isDeterminantCorrect_);
 	}
 
 	template<typename T>
-	T& matrix<T>::get(size_t X, size_t Y) const{
-		return data[X + x * Y];
+	T& matrix<T>::getCell(size_t x, size_t y) const{
+		if (x >= width_ || y >= height_)
+			throw std::runtime_error("0. Out of range in " + __func__ + " " + __FILE__);
+		return data_[x + width_ * y];
 	}
 
 	template<typename T>
-	void matrix<T>::set(size_t X, size_t Y, const T& t) {
-		data[X + x * Y] = t;
-		if (isDeterminantCorrect)
-			isDeterminantCorrect = false;
+	void matrix<T>::setCell(size_t x, size_t y, const T& t) {
+		if (x >= width_ || y >= height_)
+			throw std::runtime_error("0. Out of range in " + __func__ + " " + __FILE__);
+		data_[x + width_ * y] = t;
+		
+		isDeterminantCorrect_ = false;
 	}
 
 	template<typename T>
-	std::ostream & operator<<(std::ostream & out, const matrix<T>& matrix) {
-		for (size_t i = 0; i < matrix.y; i++) {
-			for (size_t j = 0; j < matrix.x; j++) {
-				out << matrix.get(j,i) << '\t';
+	std::ostream & operator<<(std::ostream& ostream, const matrix<T>& in) {
+		for (size_t i = 0; i < in.height_; i++) {
+			for (size_t j = 0; j < in.wight_; j++) {
+				ostream << in.getCell(j,i) << '\t';
 			}
-			out << std::endl;
+			ostream << '\n';
 		}
-		return out;
+		return ostream;
 	}
 
 	template<typename T>
@@ -157,15 +162,15 @@ namespace YFB {
 
 	template<typename T>
 	bool matrix<T>::operator==(const matrix<T>& in) const {
-		if (x != in.x)
+		if (height_ != in.height_)
 			return false;
 
-		if (y != in.y)
+		if (width_ != in.width_)
 			return false;
 
-		for (size_t i = 0; i < x; i++) {
-			for (size_t j = 0; j < y; j++) {
-				if (get(i, j) != in.get(i, j))
+		for (size_t i = 0; i < height_; i++) {
+			for (size_t j = 0; j < width_; j++) {
+				if (getCell(i, j) != in.getCell(i, j))
 					return false;
 			}
 		}
@@ -175,31 +180,31 @@ namespace YFB {
 	template<typename T>
 	matrix<T> matrix<T>::operator+(const matrix<T>& in) const {
 		
-		if ((x != in.x) || (y != in.y))
-			throw std::runtime_error("non sync size in +");
+		if ((height_ != in.height_) || (width_ != in.width_))
+			throw std::runtime_error("1. Not the same size " + __func__ + " " + __FILE__);
 
-		matrix<T> out(x, y);
-		for (size_t i = 0; i < x; i++) {
-			for (size_t j = 0; j < y; j++) {
-				out.set(i, j, (get(i, j) + in.get(i, j)));
+		matrix<T> res(width_, height_);
+		for (size_t i = 0; i < width_; i++) {
+			for (size_t j = 0; j < height_; j++) {
+				res.set(i, j, (getCell(i, j) + in.getCell(i, j)));
 			}
 		}
 
-		return out;
+		return res;
 	}
 
 	template<typename T>
 	matrix<T> matrix<T>::operator*(const matrix<T>& in) const {
 
-		if (x != in.y)
-			throw std::runtime_error("non sync size in *");
+		if (width_ != in.height_)
+			throw std::runtime_error("2. Not the same size " + __func__ + " " + __FILE__);
 
-		matrix<T> out(in.x, y);
-		for (size_t i = 0; i < in.x; i++) {
-			for (size_t j = 0; j < y; j++) {
+		matrix<T> out((in.width_), height_);
+		for (size_t i = 0; i < in.width_; i++) {
+			for (size_t j = 0; j < height_; j++) {
 				T sum = T(0);
-				for (size_t k = 0; k < x; k++) {
-					sum += (get(k, j) * in.get(i, k));
+				for (size_t k = 0; k < width_; k++) {
+					sum += (getCell(k, j) * in.getCell(i, k));
 				}
 				out.set(i, j, sum);
 			}
@@ -209,61 +214,81 @@ namespace YFB {
 	}
 
 	template<typename T>
-	matrix<T> matrix<T>::operator*(const T &) const {
-		auto out = matrix<T>(this);
-		/*for (size_t i = 0; i < in.x; i++) {
-			for (size_t j = 0; j < y; j++) {
-				T sum = T(0);
-				for (size_t k = 0; k < x; k++) {
-					sum += (get(k, j) * in.get(i, k));
-				}
-				out.set(i, j, sum);
+	matrix<T> matrix<T>::operator*(const T& t) const {
+		auto res = *this;
+		for (size_t i = 0; i < width_; i++) {
+			for (size_t j = 0; j < height_; j++) {
+				res.setCell(i, j, getCell(i, j) * t);
 			}
-		}*/
-		out.isDeterminantCorrect = false;
-		return out;	
+		}
+		return res;	
 	}
-
+	
 	//“ранспорирует матрицу
 	template<typename T>
-	matrix<T> matrix<T>::tran() const {
-		matrix<T> out(y, x);
+	matrix<T> matrix<T>::makeTranspose() const {
+		matrix<T> res(height_, width_);
 
-		for (size_t i = 0; i < x; i++) {
-			for (size_t j = 0; j < y; j++) {
-				out.set(j, i, get(i, j));
+		for (size_t i = 0; i < width_; i++) {
+			for (size_t j = 0; j < height_; j++) {
+				res.setCell(j, i, getCell(i, j));
 			}
 		}
 
-		return out;
+		return res;
 	}
-
+	
 	//ƒетерминант (определитель)
 	template<typename T>
-	T matrix<T>::det() {
-		if (x != y)
-			throw std::runtime_error("matrix isn't square");
+	T matrix<T>::computeDeterminant() {
+		if (width_ != height_)
+			throw std::runtime_error("3. Matrix is not square " + __func__ + " " + __FILE__);
 
-		if (isDeterminantCorrect)
-			return determinant;
+		if (isDeterminantCorrect_)
+			return determinant_;
 
-		determinant = 1;
-		auto stupen = vtrie();
-		for (size_t i = 0; i < std::min(x, y); i++) {
-			determinant *= stupen.get(i, i);
+		determinant_ = 1;
+		auto triangular = makeUpperTriangular();
+		for (size_t i = 0; i < width_; i++) {
+			determinant_ *= triangular.getCell(i, i);
 		}
-		isDeterminantCorrect == true;
-		return determinant;
+		isDeterminantCorrect_ == true;
+		return determinant_;
 	}
-
+	
 	//ѕриведение к верхнетруегольнольному (ступенчатому виду) без изменени€ детерминанта
 	template<typename T>
-	matrix<T> matrix<T>::vtrie() const{
+	matrix<T> matrix<T>::makeUpperTriangular() const{
 		auto res = *this;
-		for (size_t i = 0; i < std::min(x,y); i++) {
+		for (size_t i = 0; i < std::min(width_,height_); i++) {
 			size_t not_null = i;
-			for (size_t j = i; j < y; j++) {
-				if (res.get(i, j) != 0) {
+			for (size_t j = i; j < height_; j++) {
+				if (res.getCell(i, j) != 0) {
+					not_null = j;
+					break;
+				}
+			}
+			res.doTranformation1(i, not_null);
+			auto& norm = getCell(i, i);
+			if (norm == 0) {
+				continue;
+			}
+			norm = 1 / norm;
+			for (size_t j = i + 1; j < height_; j++) {
+				res.trans3(j, i, -(getCell(i, j) * norm));
+			}
+		}
+		return res;
+	}
+	
+	//ѕриведение к нижнетруегольнольному (ступенчатому виду) без изменени€ детерминанта
+	template<typename T>
+	matrix<T> matrix<T>::makeLowerTriangular() const {
+		auto res = *this;
+		for (size_t i = 0; i < std::min(width_, height_); i++) {
+			size_t not_null = i;
+			for (size_t j = 0; j < i; j++) {
+				if (res.getCell(i, j) != 0) {
 					not_null = j;
 					break;
 				}
@@ -274,73 +299,47 @@ namespace YFB {
 				continue;
 			}
 			norm = 1 / norm;
-			for (size_t j = i + 1; j < y; j++) {
-				res.trans3(j, i, -(get(i, j) * norm));
-			}
-		}
-		return res;
-	}
-
-	//ѕриведение к нижнетруегольнольному (ступенчатому виду) без изменени€ детерминанта
-	template<typename T>
-	matrix<T> matrix<T>::ntrie() const {
-		auto res = *this;
-		for (size_t i = 0; i < std::min(x, y); i++) {
-			size_t not_null = i;
-			auto& norm = get(i, i);
-			if (norm == 0)
-				for (size_t j = 0; j < i; j++) {
-					if (res.get(i, j) != 0) {
-						not_null = j;
-						break;
-					}
-				}
-			res.trans1(i, not_null);
-			if (norm == 0) {
-				continue;
-			}
-			norm = 1 / norm;
 			for (size_t j = 0; j < i; j++) {
 				res.trans3(j, i, -(get(i, j) * norm));
 			}
 		}
 		return res;
 	}
-
+	
 	//перестановка строк
 	template<typename T>
-	void matrix<T>::trans1(size_t first, size_t second) {
-		for (size_t i = 0; i < x; i++) {
-			auto c = get(i, first);
-			set(i, first, get(i, second));
-			set(i, second, c);
+	void matrix<T>::doTranformation1(size_t first, size_t second) {
+		for (size_t i = 0; i < width_; i++) {
+			auto c = getCell(i, first);
+			setCell(i, first, getCell(i, second));
+			setCell(i, second, c);
 		}
 	}
 
 	//”множение на константу
 	template<typename T>
-	void matrix<T>::trans2(size_t line, T con) {
-		isDeterminantCorrect = false;
-		for (size_t i = 0; i < x; i++) {
-			set(i, line, get(i, line) * con);
+	void matrix<T>::doTranformation2(size_t line, T t) {
+		isDeterminantCorrect_ = false;
+		for (size_t i = 0; i < width_; i++) {
+			setCell(i, line, getCell(i, line) * t);
 		}
 	}
 
 	//ѕрибавление строки умноженной на константу
 	template<typename T>
-	void matrix<T>::trans3(size_t changing, size_t second, T con) {
-		for (size_t i = 0; i < x; i++) {
-			set(i, changing, get(i, changing) + get(i, second) * con);
+	void matrix<T>::doTranformation3(size_t changing, size_t second, T t) {
+		for (size_t i = 0; i < width_; i++) {
+			setCell(i, changing, getCell(i, changing) + getCell(i, second) * t);
 		}
 	}
-
+	
 	//–анг
 	template<typename T>
-	size_t matrix<T>::rang() const {
-		auto stupen = vtrie();
+	size_t matrix<T>::computeRang() const {
+		auto triangular = makeUpperTriangular();
 		size_t res = 0;
-		for (size_t i = 0; i < std::min(x, y); i++) {
-			if (stupen.get(i, i) != 0) {
+		for (size_t i = 0; i < std::min(width_, height_); i++) {
+			if (triangular.getCell(i, i) != 0) {
 				res++;
 			};
 		}
@@ -349,33 +348,34 @@ namespace YFB {
 
 	//ќбратна€
 	template<typename T>
-	matrix<T> matrix<T>::obr() const {
-		matrix<T> temp(x, y);
-		temp.fillNS([](int X, int Y) {return (X == Y) ? 1 : 0; });
-		return solve(temp);
+	matrix<T> matrix<T>::makeInverse() const {
+		matrix<T> one(width_, height_);
+		one.fillNS([](int x, int y) {return (x == y) ? 1 : 0; });
+		return solve(one);
 	}
 
+	//–ешает систему уравнений, где изначальна€ матрица - блок с переменными (сводит еЄ к единичной)
 	template<typename T>
-	matrix<T> matrix<T>::solve(const matrix<T>& _in_) const {
-		if (y != _in_.y)
+	matrix<T> matrix<T>::solve(const matrix<T>& in) const {
+		if (height_ != in.height_)
 			throw std::runtime_error("differ heights in solve");
-		matrix<T> temp(x + _in_.x, y);
-		for (size_t i = 0; i < y; i++) {
-			for (size_t j = 0; j < x + _in_.x; j++)
-				temp.set(j, i, (j >= x) ? (_in_.get(j - x, i)) : (get(j, i)));
+
+		matrix<T> temp(width_ + in.width_, height_);
+		for (size_t i = 0; i < height_; i++) {
+			for (size_t j = 0; j < width_ + in.width_; j++)
+				temp.set(j, i, (j >= width_) ? (in.getCell(j - width_, i)) : (getCell(j, i)));
 		}
 
-		temp = temp.ntrie().vtrie();
+		temp = temp.makeLowerTriangular().makeUpperTriangular();
 
-		matrix<T> res(_in_.x, y);
+		matrix<T> res(in.width_, in.height_);
 
-		for (size_t i = 0; i < _in_.x; i++) {
-			for (size_t j = 0; j < y; j++) {
-				res.set(i, j, temp.get(i + x, j));
+		for (size_t i = 0; i < in.width_; i++) {
+			for (size_t j = 0; j < in.height_; j++) {
+				res.set(i, j, temp.getCell(i + width_, j) / temp.getCell(i, i));
 			}
 		}
 
 		return res;
-	}
-	
+	} 	
 }
