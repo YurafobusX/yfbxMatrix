@@ -27,7 +27,7 @@ namespace yfbx {
 
 	public:
 		
-		matrix(size_t width = 0, size_t heidth = 0, T t = 0);
+		matrix(size_t width = 0, size_t heidth = 0, std::initializer_list<T> list = {});
 		matrix(const matrix<T>&);
 		~matrix();
 
@@ -74,11 +74,20 @@ namespace yfbx {
 namespace yfbx {
 
 	template<typename T>
-	matrix<T>::matrix(size_t wight, size_t height, T t) {
+	matrix<T>::matrix(size_t wight, size_t height, std::initializer_list<T> list) {
 		data_ = std::unique_ptr <T[]>(new T[wight * height]);
 		height_ = height;
 		width_ = wight;
-		fillUniform(t);
+		auto iter = list.begin();
+		for (size_t i = 0; i < height_; i++)
+			for (size_t j = 0; j < width_; j++)
+				if (iter == list.end()) {
+					setCell(j, i, 0);
+				}
+				else {
+					setCell(j, i, *iter);
+					iter++;
+				}
 	}
 	
 	template<typename T>
@@ -351,7 +360,7 @@ namespace yfbx {
 	template<typename T>
 	matrix<T> matrix<T>::makeInverse() const {
 		matrix<T> one(width_, height_);
-		one.fillWithFunction([](int x, int y) {return (x == y) ? 1 : 0; });
+		one.fillWithFunction([](size_t x, size_t y) -> T {return (x == y) ? T(1) : T(0); });
 		return solve(one);
 	}
 
