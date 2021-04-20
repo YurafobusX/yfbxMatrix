@@ -111,7 +111,7 @@ namespace UnitTest1
 				1, 1, 1, 3,
 				1, 1, 1, 1 });
 			matrix<float> b(4, 3,
-				{ 0, 1, 2, 3,
+				{ 0, 1, 2, 1,
 				1, 1, 1, 3,
 				1, 1, 1, 1 });
 			a.doTranformation3(0, 1, 1);
