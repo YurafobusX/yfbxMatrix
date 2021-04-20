@@ -120,7 +120,7 @@ namespace UnitTest1
 			Assert::IsTrue(a.makeUpperTriangular() == b);
 		}
 
-		TEST_METHOD(faw) {
+		TEST_METHOD(makeLowerTriangular) {
 			matrix<float> a(2, 2,
 				{ 1, 2,
 				1, 1 });
@@ -128,6 +128,20 @@ namespace UnitTest1
 				{ -1, 0,
 				1, 1 });
 			Assert::IsTrue(a.makeLowerTriangular() == b);
+		}
+
+		TEST_METHOD(LandU) {
+			matrix<float> a(2, 2,
+				{ 1, 2,
+				1, 1 });
+			matrix<float> b(2, 2,
+				{ -1, 0,
+				0, 1 });
+			matrix<float> c(2, 2,
+				{ 1, 0,
+				0, -1 });
+			Assert::IsTrue(a.makeLowerTriangular().makeUpperTriangular() == b);
+			Assert::IsTrue(a.makeUpperTriangular().makeLowerTriangular() == c);
 		}
 
 		TEST_METHOD(Rang) {
@@ -140,12 +154,14 @@ namespace UnitTest1
 			Assert::IsTrue(a.computeRang() == 2);
 		}
 
-		TEST_METHOD() {
-
-		}
-
-		TEST_METHOD() {
-
+		TEST_METHOD(makeInverse) {
+			matrix<float> a(2, 2,
+				{ 1, 2,
+				1, 1 });
+			matrix<float> b(2, 2,
+				{ 0, -2,
+				-1, 0 });
+			Assert::IsTrue(a.makeInverse() == 2);
 		}
 	};
 }

@@ -180,7 +180,7 @@ namespace yfbx {
 
 		for (size_t i = 0; i < height_; i++) {
 			for (size_t j = 0; j < width_; j++) {
-				if (getCell(i, j) != in.getCell(i, j))
+				if (getCell(j, i) != in.getCell(j, i))
 					return false;
 			}
 		}
