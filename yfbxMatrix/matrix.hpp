@@ -295,7 +295,8 @@ namespace yfbx {
 	template<typename T>
 	matrix<T> matrix<T>::makeLowerTriangular() const {
 		auto res = *this;
-		for (size_t i = 0; i < std::min(width_, height_); i++) {
+		for (size_t i = std::min(width_, height_); i != 0;) {
+			--i;
 			size_t not_null = i;
 			for (size_t j = 0; j < i; j++) {
 				if (res.getCell(i, j) != 0) {
