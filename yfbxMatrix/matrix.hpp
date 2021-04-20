@@ -310,7 +310,6 @@ namespace yfbx {
 			if (norm == 0) {
 				continue;
 			}
-			std::cout << res << std::endl;
 			norm = 1 / norm;
 			for (size_t j = 0; j < i; j++) {
 				res.doTranformation3(j, i, -(getCell(i, j) * norm));
@@ -385,7 +384,7 @@ namespace yfbx {
 
 		for (size_t i = 0; i < in.width_; i++) {
 			for (size_t j = 0; j < in.height_; j++) {
-				res.setCell(i, j, temp.getCell(i + width_, j) / temp.getCell(i, i));
+				res.setCell(i, j, temp.getCell(i + width_, j) / temp.getCell(j, j));
 			}
 		}
 

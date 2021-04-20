@@ -154,14 +154,25 @@ namespace UnitTest1
 			Assert::IsTrue(a.computeRang() == 2);
 		}
 
+		TEST_METHOD(solve) {
+			matrix<float> a(2, 2,
+				{ 1, 2,
+				1, 1 });
+			matrix<float> b(1, 2,
+				{ 1, 1});
+			matrix<float> c(1, 2,
+				{ 1, 0 });
+			Assert::IsTrue(a.solve(b) == c);
+		}
+
 		TEST_METHOD(makeInverse) {
 			matrix<float> a(2, 2,
 				{ 1, 2,
 				1, 1 });
 			matrix<float> b(2, 2,
-				{ 0, -2,
-				-1, 0 });
-			Assert::IsTrue(a.makeInverse() == 2);
+				{ -1, 2,
+				1, -1 });
+			Assert::IsTrue(a.makeInverse() == b);
 		}
 	};
 }
