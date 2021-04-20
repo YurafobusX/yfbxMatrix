@@ -10,5 +10,6 @@
 // Заголовки CppUnitTest
 #include "CppUnitTest.h"
 #include "../yfbxMatrix/matrix.hpp"
+#include <vector>
 
 // TODO: Установите здесь ссылки на дополнительные заголовки, требующиеся для программы

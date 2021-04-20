@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <memory>
 #include <string>
+#include <list>
 
 /*list of exceptions (std::runtime_error):
 0. Out of range
@@ -27,7 +28,7 @@ namespace yfbx {
 
 	public:
 		
-		matrix(size_t width = 0, size_t heidth = 0, std::initializer_list<T> list = {});
+		matrix(size_t width = 0, size_t heidth = 0, std::list<T> list = {});
 		matrix(const matrix<T>&);
 		~matrix();
 
@@ -43,6 +44,9 @@ namespace yfbx {
 		T computeDeterminant();
 		matrix makeUpperTriangular() const;
 		matrix makeLowerTriangular() const;
+		size_t computeRang() const;
+		matrix<T> makeInverse() const;
+		matrix<T> solve(const matrix<T>&) const;
 
 		template<typename D>
 		friend std::ostream& operator<<(std::ostream&, const matrix<D>&);
@@ -54,10 +58,6 @@ namespace yfbx {
 		matrix<T> operator+(const matrix<T>&) const;
 		matrix<T> operator*(const matrix<T>&) const;
 		matrix<T> operator*(const T&) const;
-
-		size_t computeRang() const;
-		matrix<T> makeInverse() const;
-		matrix<T> solve(const matrix<T>&) const;
 
 		// Блок преобразований. 
 		// Используем следующие их обозначения
@@ -74,7 +74,7 @@ namespace yfbx {
 namespace yfbx {
 
 	template<typename T>
-	matrix<T>::matrix(size_t wight, size_t height, std::initializer_list<T> list) {
+	matrix<T>::matrix(size_t wight, size_t height, std::list<T> list) {
 		data_ = std::unique_ptr <T[]>(new T[wight * height]);
 		height_ = height;
 		width_ = wight;
@@ -82,7 +82,7 @@ namespace yfbx {
 		for (size_t i = 0; i < height_; i++)
 			for (size_t j = 0; j < width_; j++)
 				if (iter == list.end()) {
-					setCell(j, i, 0);
+					setCell(j, i, {});
 				}
 				else {
 					setCell(j, i, *iter);
