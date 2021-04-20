@@ -72,10 +72,6 @@ namespace UnitTest1
 			auto d = matrix<std::list<float>>(2, 2);
 		}
 
-		TEST_METHOD(plus) {
-			
-		}
-
 	};
 
 	TEST_CLASS(Tranformation) {
@@ -91,6 +87,34 @@ namespace UnitTest1
 				1, 2, 3, 4,
 				1, 1, 1, 1 });
 			a.doTranformation1(0, 1);
+			Assert::IsTrue(a == b);
+		}
+
+		TEST_METHOD(tho) {
+
+			matrix<float> a(4, 3,
+				{ 1, 2, 3, 4,
+				1, 1, 1, 3,
+				1, 1, 1, 1 });
+			matrix<float> b(4, 3,
+				{ 2, 4, 6, 8,
+				1, 1, 1, 3,
+				1, 1, 1, 1 });
+			a.doTranformation2(0, 2);
+			Assert::IsTrue(a == b);
+		}
+
+		TEST_METHOD(three) {
+
+			matrix<float> a(4, 3,
+				{ 1, 2, 3, 4,
+				1, 1, 1, 3,
+				1, 1, 1, 1 });
+			matrix<float> b(4, 3,
+				{ 0, 1, 2, 3,
+				1, 1, 1, 3,
+				1, 1, 1, 1 });
+			a.doTranformation3(0, 1, 1);
 			Assert::IsTrue(a == b);
 		}
 	};
