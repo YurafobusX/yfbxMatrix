@@ -298,7 +298,8 @@ namespace yfbx {
 		for (size_t i = std::min(width_, height_); i != 0;) {
 			--i;
 			size_t not_null = i;
-			for (size_t j = 0; j < i; j++) {
+			for (size_t j = i + 1; j != 0;) {
+				--j;
 				if (res.getCell(i, j) != 0) {
 					not_null = j;
 					break;
@@ -309,6 +310,7 @@ namespace yfbx {
 			if (norm == 0) {
 				continue;
 			}
+			std::cout << res << std::endl;
 			norm = 1 / norm;
 			for (size_t j = 0; j < i; j++) {
 				res.doTranformation3(j, i, -(getCell(i, j) * norm));
